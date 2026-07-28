@@ -1,7 +1,3 @@
-import argparse
-import sys
-from typing import Callable
-
 import os
 import glob
 from pathlib import Path
@@ -13,6 +9,8 @@ import joblib
 import inspect
 from __future__ import annotations
 
+#########################################################################################################
+#Import Data
 meta = pd.read_csv("data/example/41_meta.csv")
 key = pd.read_csv("data/example/41_key.csv")
 std  = "data/example/41_std.csv"
@@ -26,6 +24,8 @@ mlp_5  = joblib.load("/models/M1112.pkl")
 mlp_6  = joblib.load("/models/M13.pkl")
 mlp_7  = joblib.load("/models/M1617.pkl")
 
+#########################################################################################################
+# Basic Functions
 def _safe_predict(model, X):
     X = np.asarray(X, dtype=np.float32)
     if X.ndim == 1:
@@ -41,6 +41,70 @@ def _safe_predict(model, X):
         y = model.predict(X)
 
     return float(np.asarray(y).squeeze()) if X.shape[0] == 1 else np.asarray(y).squeeze()
+
+def _as_float(x):
+    try:
+        return float(x)
+    except Exception:
+        return np.nan
+
+def get_std(mean, stdev, value):
+    mean  = _as_float(mean)
+    stdev = _as_float(stdev)
+    value = _as_float(value)
+
+    if np.isnan(mean):  mean  = 0.0
+    if np.isnan(stdev) or stdev == 0: 
+        return value
+        
+    return (value - mean) / stdev
+
+def get_raw(mean, stdev, value):
+    mean  = _as_float(mean)
+    stdev = _as_float(stdev)
+    value = _as_float(value)
+
+    if np.isnan(mean):  mean  = 0.0
+    if np.isnan(stdev) or stdev == 0:  
+        return value + mean  
+
+    return stdev * value + mean
+
+def get_r2(actual, pred):
+    a = np.asarray(actual, dtype=float)
+    p = np.asarray(pred, dtype=float)
+
+    if a.size < 10:
+        return np.nan
+    if np.isnan(a).any() or np.isnan(p).any():
+        return np.nan
+
+    ss_res = np.sum((a - p) ** 2)
+
+    mean_a = np.mean(a)
+    ss_tot = np.sum((a - mean_a) ** 2)
+
+    if ss_tot == 0:
+        return np.nan
+    return 1.0 - (ss_res / ss_tot)
+
+def coerce_numeric(df: pd.DataFrame, cols: list[str]):
+    for c in cols:
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+
+coerce_numeric(key, KEY_COLS)
+
+def build_key_lookup(key_df: pd.DataFrame):
+    """
+    return: key_lookup[res_id][month] = {col: value, ...}
+    """
+    key_lookup = {}
+    for (rid, m), sub in key_df.groupby(["res_id", "month"]):
+        row = sub.iloc[0]
+        key_lookup.setdefault(rid, {})[m] = {col: row[col] for col in KEY_COLS if col in row}
+    return key_lookup
+
 
 def _mlp_predict1(model, feats14) -> float:
     return _safe_predict(model, np.asarray(feats14, dtype=np.float32))
@@ -63,6 +127,8 @@ def _mlp_predict6(model, feats9) -> float:
 def _mlp_predict7(model, feats9) -> float:
     return _safe_predict(model, np.asarray(feats9, dtype=np.float32))
 
+#########################################################################################################
+#PLRT_Hybrid Functions
 def plrt_mlp(storage_pre: float, release_pre: float, inflow: float, sto_diff: float,
              release_roll7: float, inflow_roll7: float, storage_x_inflow: float,
              inflow2: float, release_pre2: float, max_sto: float, rts: float, is_weekend: float, 
@@ -170,74 +236,6 @@ def plrt_mlp(storage_pre: float, release_pre: float, inflow: float, sto_diff: fl
                     else:  # Mode 17
                         val = _mlp_predict7(mlp_7, feats9)
                         return {"value": val, "mode": 17}
-
-
-def _as_float(x):
-    try:
-        return float(x)
-    except Exception:
-        return np.nan
-
-def get_std(mean, stdev, value):
-    mean  = _as_float(mean)
-    stdev = _as_float(stdev)
-    value = _as_float(value)
-
-    if np.isnan(mean):  mean  = 0.0
-    if np.isnan(stdev) or stdev == 0: 
-        return value
-        
-    return (value - mean) / stdev
-
-def get_raw(mean, stdev, value):
-    mean  = _as_float(mean)
-    stdev = _as_float(stdev)
-    value = _as_float(value)
-
-    if np.isnan(mean):  mean  = 0.0
-    if np.isnan(stdev) or stdev == 0:  
-        return value + mean  
-
-    return stdev * value + mean
-
-
-
-KEY_COLS = [
-    "release_mean","release_std",
-    "storage_mean","storage_std",
-    "release_roll7_mean","release_roll7_std",
-    "storage_roll7_mean","storage_roll7_std",
-    "release_pre_mean","release_pre_std",
-    "release_pre2_mean","release_pre2_std",
-    "storage_pre_mean","storage_pre_std",
-    "sto_diff_mean","sto_diff_std",
-    "storage_x_inflow_mean","storage_x_inflow_std",
-]
-
-def coerce_numeric(df: pd.DataFrame, cols: list[str]):
-    for c in cols:
-        if c in df.columns:
-            df[c] = pd.to_numeric(df[c], errors="coerce")
-
-coerce_numeric(key, KEY_COLS)
-
-STD_NUM_COLS = [
-    "storage_pre","release_pre","inflow","sto_diff","release_roll7","inflow_roll7",
-    "storage_x_inflow","inflow2","release_pre2","max_sto","rts","month"
-]
-RAW_NUM_COLS = ["storage_pre","inflow","release"]
-
-def build_key_lookup(key_df: pd.DataFrame):
-    """
-    return: key_lookup[res_id][month] = {col: value, ...}
-    """
-    key_lookup = {}
-    for (rid, m), sub in key_df.groupby(["res_id", "month"]):
-        row = sub.iloc[0]
-        key_lookup.setdefault(rid, {})[m] = {col: row[col] for col in KEY_COLS if col in row}
-    return key_lookup
-
-key_lookup = build_key_lookup(key)
 
 def run_plrt_hybrid(res_id: int,
                     std_df: pd.DataFrame,
@@ -397,25 +395,29 @@ def run_plrt_hybrid(res_id: int,
     return pd.concat([std_data, out.drop(columns=["res_id", "date"])], axis=1)
 
 
-def get_r2(actual, pred):
-    a = np.asarray(actual, dtype=float)
-    p = np.asarray(pred, dtype=float)
-
-    if a.size < 10:
-        return np.nan
-    if np.isnan(a).any() or np.isnan(p).any():
-        return np.nan
-
-    ss_res = np.sum((a - p) ** 2)
-
-    mean_a = np.mean(a)
-    ss_tot = np.sum((a - mean_a) ** 2)
-
-    if ss_tot == 0:
-        return np.nan
-    return 1.0 - (ss_res / ss_tot)
-
+#########################################################################################################
 # Run Example
+
+KEY_COLS = [
+    "release_mean","release_std",
+    "storage_mean","storage_std",
+    "release_roll7_mean","release_roll7_std",
+    "storage_roll7_mean","storage_roll7_std",
+    "release_pre_mean","release_pre_std",
+    "release_pre2_mean","release_pre2_std",
+    "storage_pre_mean","storage_pre_std",
+    "sto_diff_mean","sto_diff_std",
+    "storage_x_inflow_mean","storage_x_inflow_std",
+]
+
+STD_NUM_COLS = [
+    "storage_pre","release_pre","inflow","sto_diff","release_roll7","inflow_roll7",
+    "storage_x_inflow","inflow2","release_pre2","max_sto","rts","month"
+]
+RAW_NUM_COLS = ["storage_pre","inflow","release"]
+
+key_lookup = build_key_lookup(key)
+
 FREQS    = [1, 2, 7, 30, 90, 180]
 METHODS  = {
     "plrt_hybrid": run_plrt_hybrid, 
