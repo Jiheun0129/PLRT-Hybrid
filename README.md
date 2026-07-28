@@ -300,4 +300,4 @@ Ford, L., & Sankarasubramanian, A. (2023). Generalizing reservoir operations usi
 Li, D., Chen, Y., Cai, X., Zhao, Q. (2025). Data-driven Reservoir Operation Rules for 450+ Reservoirs in Contiguous United States, HydroShare, https://doi.org/10.4211/hs.63add4d5826a4b21a6546c571bdece10
 
 Steyaert, J. C., Condon, L. E., WD Turner, S., & Voisin, N. (2022). ResOpsUS, a dataset of historical reservoir operations in the contiguous United States. Scientific Data, 9(1), 34.
->>>>>>> 57bb1a3 (Initial release of PLRT-Hybrid)
+
