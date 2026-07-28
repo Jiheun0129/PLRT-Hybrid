@@ -1,0 +1,2 @@
+ID,DAM_NAME,STATE,AGENCY_CODE,longtitude,lattitude,feature_id,dataset,rts,max_sto,split
+41,Ross,Washington,SCL,-121.067305,48.732466,24260289,plrt,128.2375373,1296355000,val

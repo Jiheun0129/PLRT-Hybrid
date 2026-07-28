@@ -1,0 +1,15 @@
+name: plrt-hybrid
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - joblib
+  - pip:
+      - tensorflow==2.15
