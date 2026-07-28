@@ -415,8 +415,7 @@ def get_r2(actual, pred):
         return np.nan
     return 1.0 - (ss_res / ss_tot)
 
-
-
+# Run Example
 FREQS    = [1, 2, 7, 30, 90, 180]
 METHODS  = {
     "plrt_hybrid": run_plrt_hybrid, 
