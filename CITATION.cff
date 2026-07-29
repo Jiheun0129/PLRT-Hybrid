@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "PLRT-Hybrid"
+type: software
+authors:
+  - family-names: Kim
+    given-names: Jiheun
+  - family-names: Fang
+    given-names: Shiqi
+  - family-names: Sankarasubramanian
+    given-names: Arumugam
+version: "1.0.3"
+date-released: 2026-07-29
+repository-code: "https://github.com/Jiheun0129/PLRT-Hybrid"
