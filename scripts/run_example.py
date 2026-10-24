@@ -268,7 +268,7 @@ def run_plrt_hybrid(res_id: int,
     for t in range(n):
         m = int(std_data.loc[t, "month"])
         if res_id not in key_lookup or m not in key_lookup[res_id]:
-            raise KeyError(f"key_lookup에 res_id={res_id}, month={m} 통계가 없음")
+            raise KeyError(f"key_lookup has no res_id={res_id}, month={m} statistics")
         key_row = key_lookup[res_id][m]
 
         if t < 7 or ((t + 1) % frequency == 0):
@@ -305,7 +305,7 @@ def run_plrt_hybrid(res_id: int,
                 + float(raw_data.loc[t, "inflow"])
                 - float(release_pred_raw)
             )
-            storage_pred_raw = max(0.0, min(storage_pred_raw, float(std_data.loc[t, "max_sto"]) * 0.9))
+            storage_pred_raw = max(0.0, min(storage_pred_raw, float(std_data.loc[t, "max_sto"])))
             out.loc[t, "storage_pred_raw"] = float(storage_pred_raw)
 
             out.loc[t, "storage_pred_std"] = get_std(
@@ -381,11 +381,11 @@ def run_plrt_hybrid(res_id: int,
             out.loc[t, "release_pred_raw"] = float(release_pred_raw)
 
             storage_pred_raw = (
-                float(raw_data.loc[t, "storage_pre"])
+                float(out.loc[t-1, "storage_pred_raw"])
                 + float(raw_data.loc[t, "inflow"])
                 - float(release_pred_raw)
             )
-            storage_pred_raw = max(0.0, min(storage_pred_raw, float(std_data.loc[t, "max_sto"]) * 0.9))
+            storage_pred_raw = max(0.0, min(storage_pred_raw, float(std_data.loc[t, "max_sto"])))
             out.loc[t, "storage_pred_raw"] = float(storage_pred_raw)
 
             out.loc[t, "storage_pred_std"] = get_std(
