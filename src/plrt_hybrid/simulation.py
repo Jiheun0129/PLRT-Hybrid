@@ -228,12 +228,12 @@ def run_plrt_hybrid(res_id: int,
     for c in cols_init:
         out[c] = out[c].astype("float64")
 
-    release_max_global = float(raw_data["release"].max(skipna=True))*1.1 if "release" in raw_data.columns else np.inf
+    release_max_global = float(raw_data["release"].max(skipna=True)) if "release" in raw_data.columns else np.inf
 
     for t in range(n):
         m = int(std_data.loc[t, "month"])
         if res_id not in key_lookup or m not in key_lookup[res_id]:
-            raise KeyError(f"key_lookup에 res_id={res_id}, month={m} 통계가 없음")
+            raise KeyError(f"key_lookup no res_id={res_id}, month={m}")
         key_row = key_lookup[res_id][m]
 
         if t < 7 or ((t + 1) % frequency == 0):
