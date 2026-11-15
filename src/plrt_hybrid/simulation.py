@@ -270,7 +270,7 @@ def run_plrt_hybrid(res_id: int,
                 + float(raw_data.loc[t, "inflow"])
                 - float(release_pred_raw)
             )
-            storage_pred_raw = max(0.0, min(storage_pred_raw, float(std_data.loc[t, "max_sto"]) * 0.9))
+            storage_pred_raw = max(0.0, min(storage_pred_raw, float(std_data.loc[t, "max_sto"])))
             out.loc[t, "storage_pred_raw"] = float(storage_pred_raw)
 
             out.loc[t, "storage_pred_std"] = get_std(
@@ -350,7 +350,7 @@ def run_plrt_hybrid(res_id: int,
                 + float(raw_data.loc[t, "inflow"])
                 - float(release_pred_raw)
             )
-            storage_pred_raw = max(0.0, min(storage_pred_raw, float(std_data.loc[t, "max_sto"]) * 0.9))
+            storage_pred_raw = max(0.0, min(storage_pred_raw, float(std_data.loc[t, "max_sto"])))
             out.loc[t, "storage_pred_raw"] = float(storage_pred_raw)
 
             out.loc[t, "storage_pred_std"] = get_std(
