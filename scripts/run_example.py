@@ -128,6 +128,151 @@ def _mlp_predict7(model, feats9) -> float:
     return _safe_predict(model, np.asarray(feats9, dtype=np.float32))
 
 #########################################################################################################
+#PLRT Functions
+
+from __future__ import annotations
+
+def plrt_mlr(storage_pre: float, release_pre: float, inflow: float, sto_diff: float,
+             release_roll7: float, inflow_roll7: float, storage_x_inflow: float,
+             inflow2: float, release_pre2: float, max_sto: float, rts: float) -> dict:
+
+    vals = [storage_pre, release_pre, inflow, sto_diff,
+            release_roll7, inflow_roll7, storage_x_inflow,
+            inflow2, release_pre2, max_sto, rts]
+    if any(pd.isna(v) for v in vals):
+        raise ValueError("❌ MISSING INPUT in plrt_mlr()")
+
+    #feats9 = [storage_pre, release_pre, inflow, sto_diff,
+    #          release_roll7, inflow_roll7, storage_x_inflow,
+    #          inflow2, release_pre2]
+    
+
+    if max_sto <= 185505416.716:  # Mode 1~6
+        if max_sto <= 8339264.432:  # Mode 1
+            val = (0.000 + storage_pre*0.033 + release_pre*0.454 +
+                   inflow*0.352 + sto_diff*0.102 + release_roll7*0.287 +
+                   inflow_roll7*(-0.204) + storage_x_inflow*0.038 +
+                   inflow2*0.237 + release_pre2*(-0.150))
+            return {"value": val, "mode": 1}
+
+        else:
+            if rts <= 189.225:  # Mode 2~5
+                if rts <= 13.971:  # Mode 2
+                    val = (0.000 + storage_pre*0.081 + release_pre*0.445 +
+                           inflow*0.291 + sto_diff*0.081 + release_roll7*0.175 +
+                           inflow_roll7*(-0.105) + storage_x_inflow*0.154 +
+                           inflow2*0.141 + release_pre2*(-0.091))
+                    return {"value": val, "mode": 2}
+
+                else:  # Mode 3~5
+                    if release_pre <= 0.726:
+                        if storage_x_inflow <= 0.152:  # Mode 3
+                            val = (-0.008 + storage_pre*0.018 + release_pre*0.835 +
+                                   inflow*0.084 + sto_diff*0.090 + release_roll7*0.020 +
+                                   inflow_roll7*(-0.033) + storage_x_inflow*(-0.040) +
+                                   inflow2*0.006 + release_pre2*0.125)
+                            return {"value": val, "mode": 3}
+                        else:  # Mode 4 (MLP)
+                            val = (-0.080 + storage_pre*0.023 + release_pre*0.975 +
+                                   inflow*0.202 + sto_diff*0.189 + release_roll7*0.068 +
+                                   inflow_roll7*(-0.121) + storage_x_inflow*(0.101) +
+                                   inflow2*(-0.071) + release_pre2*(-0.147))
+                            return {"value": val, "mode": 4}
+                    else:  # Mode 5
+                        val = (0.157 + storage_pre*0.113 + release_pre*0.725 +
+                               inflow*0.278 + sto_diff*0.179 + release_roll7*0.065 +
+                               inflow_roll7*(-0.119) + storage_x_inflow*(-0.017) +
+                               inflow2*0.002 + release_pre2*(-0.029))
+                        return {"value": val, "mode": 5}
+
+            else:  # Mode 6
+                val = (0.000 + storage_pre*0.007 + release_pre*0.999 +
+                       inflow*(-0.002) + sto_diff*0.063 + release_roll7*0.004 +
+                       inflow_roll7*(-0.029) + storage_x_inflow*0.051 +
+                       inflow2*0.040 + release_pre2*(-0.091))
+                return {"value": val, "mode": 6}
+
+    else:  # Mode 7~17
+        if rts <= 23.848:  # Mode 7,8
+            if max_sto <= 795061466.513:  # Mode 7
+                val = (0.000 + storage_pre*0.040 + release_pre*0.226 +
+                       inflow*0.203 + sto_diff*0.050 + release_roll7*0.086 +
+                       inflow_roll7*(-0.048) + storage_x_inflow*0.521 +
+                       inflow2*(-0.007) + release_pre2*0.015)
+                return {"value": val, "mode": 7}
+            else:  # Mode 8
+                val = (0.000 + storage_pre*0.080 + release_pre*0.526 +
+                       inflow*0.456 + sto_diff*0.156 + release_roll7*0.132 +
+                       inflow_roll7*(-0.080) + storage_x_inflow*(-0.069) +
+                       inflow2*(-0.053) + release_pre2*0.056)
+                return {"value": val, "mode": 8}
+
+        else:  # Mode 9~17
+            if release_pre <= -0.561:  # Mode 9~12
+                if max_sto <= 959064570.924:  # Mode 9,10
+                    if rts <= 158.356:  # Mode 9 (MLP)
+                       val = (-0.041 + storage_pre*0.025 + release_pre*0.734 +
+                       inflow*0.041 + sto_diff*0.155 + release_roll7*0.131 +
+                       inflow_roll7*(-0.001) + storage_x_inflow*(-0.019) +
+                       inflow2*(-0.024) + release_pre2*0.057)
+                       return {"value": val, "mode": 9}
+                    else:  # Mode 10 (MLP)
+                        val = (-0.018 + storage_pre*0.027 + release_pre*0.499 +
+                        inflow*0.013 + sto_diff*0.712 + release_roll7*0.311 +
+                        inflow_roll7*(-0.042) + storage_x_inflow*(0.013) +
+                        inflow2*(-0.001) + release_pre2*0.150)
+                        return {"value": val, "mode": 10}
+                else:  # Mode 11,12
+                    if inflow2 <= -0.134:  # Mode 11 (MLP)
+                        val = (-0.199 + storage_pre*0.035 + release_pre*0.380 +
+                        inflow*0.067 + sto_diff*0.823 + release_roll7*0.370 +
+                        inflow_roll7*(-0.036) + storage_x_inflow*(-0.085) +
+                        inflow2*(-0.011) + release_pre2*(-0.050))
+                        return {"value": val, "mode": 11}
+                    else:  # Mode 12 (MLP)
+                        val = (-0.034 + storage_pre*0.049 + release_pre*0.113 +
+                        inflow*(-0.018) + sto_diff*0.082 + release_roll7*0.402 +
+                        inflow_roll7*(-0.013) + storage_x_inflow*(0.009) +
+                        inflow2*(0.004) + release_pre2*0.394)
+                        return {"value": val, "mode": 12}
+
+            else:  # Mode 13~17
+                if storage_pre <= 0.852:  # Mode 13~15
+                    if inflow <= -0.594:  # Mode 13
+                        val = (-0.062 + storage_pre*0.022 + release_pre*0.491 +
+                               inflow*0.020 + sto_diff*0.460 + release_roll7*0.258 +
+                               inflow_roll7*(-0.107) + storage_x_inflow*0.024 +
+                               inflow2*0.033 + release_pre2*0.109)
+                        return {"value": val, "mode": 13}
+                    else:
+                        if max_sto <= 1510090693.013:  # Mode 14
+                            val = (-0.013 + storage_pre*0.014 + release_pre*0.824 +
+                                   inflow*0.004 + sto_diff*0.356 + release_roll7*0.084 +
+                                   inflow_roll7*0.018 + storage_x_inflow*0.031 +
+                                   inflow2*(-0.006) + release_pre2*(-0.011))
+                            return {"value": val, "mode": 14}
+                        else:  # Mode 15
+                            val = (-0.035 + storage_pre*0.045 + release_pre*0.654 +
+                                   inflow*0.120 + sto_diff*0.485 + release_roll7*0.195 +
+                                   inflow_roll7*0.034 + storage_x_inflow*(-0.136) +
+                                   inflow2*(-0.040) + release_pre2*0.041)
+                            return {"value": val, "mode": 15}
+
+                else:  # Mode 16,17
+                    if release_roll7 <= 1.030:  # Mode 16
+                        val = (-0.137 + storage_pre*0.098 + release_pre*1.080 +
+                               inflow*0.007 + sto_diff*0.433 + release_roll7*0.035 +
+                               inflow_roll7*(-0.003) + storage_x_inflow*0.015 +
+                               inflow2*0.022 + release_pre2*(-0.199))
+                        return {"value": val, "mode": 16}
+                    else:  # Mode 17
+                        val = (-0.002 + storage_pre*0.094 + release_pre*0.953 +
+                               inflow*0.087 + sto_diff*0.154 + release_roll7*0.003 +
+                               inflow_roll7*(-0.025) + storage_x_inflow*(-0.033) +
+                               inflow2*0.005 + release_pre2*(-0.057))
+                        return {"value": val, "mode": 17}
+
+#########################################################################################################
 #PLRT_Hybrid Functions
 def plrt_mlp(storage_pre: float, release_pre: float, inflow: float, sto_diff: float,
              release_roll7: float, inflow_roll7: float, storage_x_inflow: float,
@@ -236,6 +381,171 @@ def plrt_mlp(storage_pre: float, release_pre: float, inflow: float, sto_diff: fl
                     else:  # Mode 17
                         val = _mlp_predict7(mlp_7, feats9)
                         return {"value": val, "mode": 17}
+
+
+def run_plrt_bc(res_id: int,
+                std_df: pd.DataFrame,
+                raw_df: pd.DataFrame,
+                key_lookup: dict,
+                frequency: int = 7) -> pd.DataFrame:
+
+    std_data = std_df.loc[std_df["res_id"] == res_id].sort_values("date").reset_index(drop=True)
+    raw_data = raw_df.loc[raw_df["res_id"] == res_id].sort_values("date").reset_index(drop=True)
+
+    if std_data.empty or raw_data.empty:
+        raise ValueError(f"res_id {res_id}: std/raw data is empty")
+
+    if len(std_data) != len(raw_data):
+        raise ValueError(f"res_id {res_id}: std and raw data lengths differ ({len(std_data)} != {len(raw_data)})")
+
+    if not std_data["date"].equals(raw_data["date"]):
+        raise ValueError(f"res_id {res_id}: std and raw dates do not match")
+
+    n = len(std_data)
+
+    out = std_data[["res_id", "date"]].copy()
+    cols_init = [
+        "release_pred_raw", "release_pred_std", "storage_pred_raw", "storage_pred_std",
+        "release_pred_roll7_raw", "release_pred_pre_raw", "release_pred_pre2_raw",
+        "storage_pred_roll7_raw", "storage_pred_pre_raw", "sto_diff_pred_raw", "storage_x_inflow_pred_raw",
+        "release_pred_roll7_std", "release_pred_pre_std", "release_pred_pre2_std",
+        "storage_pred_roll7_std", "storage_pred_pre_std", "sto_diff_pred_std", "storage_x_inflow_pred_std",
+        "plrt_mode"
+    ]
+
+    for c in cols_init:
+        out[c] = np.nan
+
+    for c in cols_init:
+        out[c] = out[c].astype("float64")
+
+    release_max_global = float(raw_data["release"].max(skipna=True)) * 1.1 if "release" in raw_data.columns else np.inf
+
+    for t in range(n):
+        m = int(std_data.loc[t, "month"])
+
+        if res_id not in key_lookup or m not in key_lookup[res_id]:
+            raise KeyError(f"Missing statistics in key_lookup for res_id={res_id}, month={m}")
+
+        key_row = key_lookup[res_id][m]
+
+        if t < 7 or ((t + 1) % frequency == 0):
+            res = plrt_mlr(
+                std_data.loc[t, "storage_pre"],
+                std_data.loc[t, "release_pre"],
+                std_data.loc[t, "inflow"],
+                std_data.loc[t, "sto_diff"],
+                std_data.loc[t, "release_roll7"],
+                std_data.loc[t, "inflow_roll7"],
+                std_data.loc[t, "storage_x_inflow"],
+                std_data.loc[t, "inflow2"],
+                std_data.loc[t, "release_pre2"],
+                std_data.loc[t, "max_sto"],
+                std_data.loc[t, "rts"]
+            )
+
+            val = float(res["value"])
+            mode = int(res["mode"])
+
+            out.loc[t, "release_pred_std"] = val
+            out.loc[t, "plrt_mode"] = float(mode)
+
+            release_pred_raw = get_raw(key_row["release_mean"], key_row["release_std"], val)
+            release_pred_raw = max(0.0, min(release_pred_raw, release_max_global))
+            out.loc[t, "release_pred_raw"] = float(release_pred_raw)
+
+            storage_pred_raw = (
+                float(raw_data.loc[t, "storage_pre"])
+                + float(raw_data.loc[t, "inflow"])
+                - float(release_pred_raw)
+            )
+
+            storage_pred_raw = max(0.0, min(storage_pred_raw, float(std_data.loc[t, "max_sto"])))
+            out.loc[t, "storage_pred_raw"] = float(storage_pred_raw)
+
+            out.loc[t, "storage_pred_std"] = get_std(
+                key_row["storage_mean"], key_row["storage_std"], storage_pred_raw
+            )
+
+        else:
+            r7r = float(np.mean(out.loc[t-7:t-1, "release_pred_raw"]))
+            s7r = float(np.mean(out.loc[t-7:t-1, "storage_pred_raw"]))
+
+            rpr = float(out.loc[t-1, "release_pred_raw"])
+            rpr2 = rpr ** 2
+            spr = float(out.loc[t-1, "storage_pred_raw"])
+            st_diff = spr - s7r
+            sxi = spr * float(raw_data.loc[t, "inflow"])
+
+            out.loc[t, "release_pred_roll7_raw"] = r7r
+            out.loc[t, "storage_pred_roll7_raw"] = s7r
+            out.loc[t, "release_pred_pre_raw"] = rpr
+            out.loc[t, "release_pred_pre2_raw"] = rpr2
+            out.loc[t, "storage_pred_pre_raw"] = spr
+            out.loc[t, "sto_diff_pred_raw"] = st_diff
+            out.loc[t, "storage_x_inflow_pred_raw"] = sxi
+
+            out.loc[t, "release_pred_roll7_std"] = get_std(
+                key_row["release_roll7_mean"], key_row["release_roll7_std"], r7r
+            )
+            out.loc[t, "storage_pred_roll7_std"] = get_std(
+                key_row["storage_roll7_mean"], key_row["storage_roll7_std"], s7r
+            )
+            out.loc[t, "release_pred_pre_std"] = get_std(
+                key_row["release_pre_mean"], key_row["release_pre_std"], rpr
+            )
+            out.loc[t, "release_pred_pre2_std"] = get_std(
+                key_row["release_pre2_mean"], key_row["release_pre2_std"], rpr2
+            )
+            out.loc[t, "storage_pred_pre_std"] = get_std(
+                key_row["storage_pre_mean"], key_row["storage_pre_std"], spr
+            )
+            out.loc[t, "sto_diff_pred_std"] = get_std(
+                key_row["sto_diff_mean"], key_row["sto_diff_std"], st_diff
+            )
+            out.loc[t, "storage_x_inflow_pred_std"] = get_std(
+                key_row["storage_x_inflow_mean"], key_row["storage_x_inflow_std"], sxi
+            )
+
+            res = plrt_mlr(
+                out.loc[t, "storage_pred_pre_std"],
+                out.loc[t, "release_pred_pre_std"],
+                std_data.loc[t, "inflow"],
+                out.loc[t, "sto_diff_pred_std"],
+                out.loc[t, "release_pred_roll7_std"],
+                std_data.loc[t, "inflow_roll7"],
+                out.loc[t, "storage_x_inflow_pred_std"],
+                std_data.loc[t, "inflow2"],
+                out.loc[t, "release_pred_pre2_std"],
+                std_data.loc[t, "max_sto"],
+                std_data.loc[t, "rts"]
+            )
+
+            val = float(res["value"])
+            mode = int(res["mode"])
+
+            out.loc[t, "release_pred_std"] = val
+            out.loc[t, "plrt_mode"] = float(mode)
+
+            release_pred_raw = get_raw(key_row["release_mean"], key_row["release_std"], val)
+            release_pred_raw = max(0.0, min(release_pred_raw, release_max_global))
+            out.loc[t, "release_pred_raw"] = float(release_pred_raw)
+
+            storage_pred_raw = (
+                float(raw_data.loc[t, "storage_pre"])
+                + float(raw_data.loc[t, "inflow"])
+                - float(release_pred_raw)
+            )
+
+            storage_pred_raw = max(0.0, min(storage_pred_raw, float(std_data.loc[t, "max_sto"])))
+            out.loc[t, "storage_pred_raw"] = float(storage_pred_raw)
+
+            out.loc[t, "storage_pred_std"] = get_std(
+                key_row["storage_mean"], key_row["storage_std"], storage_pred_raw
+            )
+
+    return pd.concat([std_data, out.drop(columns=["res_id", "date"])], axis=1)
+
 
 def run_plrt_hybrid(res_id: int,
                     std_df: pd.DataFrame,
@@ -420,6 +730,7 @@ key_lookup = build_key_lookup(key)
 
 FREQS    = [1, 2, 7, 30, 90, 180]
 METHODS  = {
+    "plrt_bc": run_plrt_bc,
     "plrt_hybrid": run_plrt_hybrid, 
 }
 
