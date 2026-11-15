@@ -93,7 +93,20 @@ def coerce_numeric(df: pd.DataFrame, cols: list[str]):
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
 
+KEY_COLS = [
+    "release_mean", "release_std",
+    "storage_mean", "storage_std",
+    "release_roll7_mean", "release_roll7_std",
+    "storage_roll7_mean", "storage_roll7_std",
+    "release_pre_mean", "release_pre_std",
+    "release_pre2_mean", "release_pre2_std",
+    "storage_pre_mean", "storage_pre_std",
+    "sto_diff_mean", "sto_diff_std",
+    "storage_x_inflow_mean", "storage_x_inflow_std"
+]
+
 coerce_numeric(key, KEY_COLS)
+
 
 def build_key_lookup(key_df: pd.DataFrame):
     """
@@ -708,17 +721,7 @@ def run_plrt_hybrid(res_id: int,
 #########################################################################################################
 # Run Example
 
-KEY_COLS = [
-    "release_mean","release_std",
-    "storage_mean","storage_std",
-    "release_roll7_mean","release_roll7_std",
-    "storage_roll7_mean","storage_roll7_std",
-    "release_pre_mean","release_pre_std",
-    "release_pre2_mean","release_pre2_std",
-    "storage_pre_mean","storage_pre_std",
-    "sto_diff_mean","sto_diff_std",
-    "storage_x_inflow_mean","storage_x_inflow_std",
-]
+rid = 41
 
 STD_NUM_COLS = [
     "storage_pre","release_pre","inflow","sto_diff","release_roll7","inflow_roll7",
@@ -741,6 +744,13 @@ for df in (std, raw, key):
         df["month"] = df["date"].dt.month
 
 key_lookup = build_key_lookup(key)
+
+pred_df = run_plrt_bc(rid, std_df=std, raw_df=raw, key_lookup=key_lookup, frequency=2) #Change Initialization frequency here
+
+obs = raw.loc[raw["res_id"] == rid].sort_values("date")["release"].values
+pred = pred_df["release_pred_raw"].values
+r2 = get_r2(obs, pred)
+print("R^2 =", r2)
 
 pred_df = run_plrt_hybrid(rid, std_df=std, raw_df=raw, key_lookup=key_lookup, frequency=2) #Change Initialization frequency here
 
